@@ -478,7 +478,7 @@ The crowd erupts in applause and cheer. You can barely hear yourself think. Only
 Once selected, the battle will immediately commence.
 If you are new to the game or need a refresher on the rules, please input the letter H for Help (H).
 
-    Good luck, and may the better fighter win!""")
+Good luck, and may the better fighter win!""")
     plr_chr = user_selection()
     cmp_chr = computer_selection()
     print(_CHAPTER_LINE * 2)
