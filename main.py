@@ -15,7 +15,8 @@ _LOSE = 0  # Might comment this out later... {UPDATE!: I'm not commenting _LOSE 
 # DICTIONARIES
 ###############
 
-# creating a margin of error to allow for the input of moves to feel more active and reactive to the player possibly misspelling a word
+# creating a margin of error to allow for the input of moves to feel more active and reactive to the player possibly
+# misspelling a word
 
 classes = {
     "assassin": ["assassin", "a"],
@@ -251,8 +252,8 @@ class Assassin:
 
 # will run code to set the cmp_chr to whatever class is randomly selected
 def computer_selection():
-    computer = random.randint(_LOW,
-                              _MAX_CHARACTERS)  # It's a simple way of denoting a random choice for what the 'computer' will get for their character
+    # This is a simple way of denoting a random choice for what the 'computer' will get for their character
+    computer = random.randint(_LOW, _MAX_CHARACTERS)
     if computer == 1:
         character = Assassin()
         return character
@@ -266,18 +267,19 @@ def computer_selection():
         character = Wizard()
         return character
     else:
-        raise ValueError(
-            "Error within the computer_selection() function code")  # if I ever revisit the code I'll know that I forgot to update this section if I add more classes
+        # if I ever revisit the code I'll know that I forgot to update this section if I add more classes
+        raise ValueError("Error within the computer_selection() function code")
 
 
 # User's choice will assign plr_chr a class
-def user_selection():  # I can make sure the player selects a valid option and then assign the user the right class, creating an instance.
+# I can make sure the player selects a valid option and then assign the user the right class, creating an instance.
+def user_selection():
     inp = ""
-    while inp not in classes["assassin"] and inp not in classes["cleric"] and inp not in classes[
-        "fighter"] and inp not in classes["wizard"] and inp != "h":
+    while (inp not in classes["assassin"] and inp not in classes["cleric"] and
+           inp not in classes["fighter"] and inp not in classes["wizard"] and inp != "h"):
         inp = input("Pick either Wizard, Fighter, Cleric, Assassin, or (H) here --> ").lower()
-        if inp not in classes["assassin"] and inp not in classes["cleric"] and inp not in classes[
-            "fighter"] and inp not in classes["wizard"] and inp != "h":
+        if (inp not in classes["assassin"] and inp not in classes["cleric"] and
+                inp not in classes["fighter"] and inp not in classes["wizard"] and inp != "h"):
             print("ERROR! Selection must be one of the letters/names above --- Try again\n")
     if inp in classes["wizard"]:
         player = Wizard()
@@ -292,7 +294,7 @@ def user_selection():  # I can make sure the player selects a valid option and t
         player = Assassin()
         return player
     elif inp == "h":
-        print(""" "Ah, so you're new 'round here? Let's give you the quick run down-" 
+        print(""" "Ah, so you're new 'round here? Let's give you the quick run down-"
 The man continues to speak. You listen carefully and write down what you hear as you go.
 
 Basics:
@@ -303,7 +305,7 @@ The most advanced and skilled fighters are ones who can accurately read a battle
 
 Moves:
 
-You have 3 total options: An attack, a block, and a spell/status effect of sorts. 
+You have 3 total options: An attack, a block, and a spell/status effect of sorts.
 Attacks will harm the opponent, bringing you closer to victory with each successful blow.
 However, attacks can be mitigated through the power of the block! Blocking will temporarily grant you an extra line of defense for that move, any damage that goes over a shield will result in HP lost.
 And last but certainly not least the status move. This move lets you temporarily boost or reduce stats of either yourself or the opponent. Varying based on the champion you select.
@@ -311,7 +313,7 @@ And last but certainly not least the status move. This move lets you temporarily
 There is a triangle method to what move should be used when. Attacks are best used against statuses, statuses against blocks, and blocks against attacks.
 Select the right one and celebrate an advantage! If not, keep fighting and learn!
 
-When you select a move, type in the move name as shown in the stat block and it 'should' go through as valid! 
+When you select a move, type in the move name as shown in the stat block and it 'should' go through as valid!
 If not, try something similar or double check your spelling.
 
 Extra:
@@ -334,8 +336,8 @@ def ready():
     swag = ""
     print("\nAre you ready to fight?\n")
     while swag not in ask_user["ready"] and swag not in ask_user["not"]:
-        swag = input(
-            "Input READY if you are ready to fight. If not, input NO and the game will stop running. Input it here --> ").lower()
+        txt = "Input READY if you are ready to fight. If not, input NO and the game will stop running. Input it here --> "
+        swag = input(txt).lower()
         if swag not in ask_user["ready"] and swag not in ask_user["not"]:
             print(_CHAPTER_LINE)
             print("\nThat is not a valid input. Please input a valid option as explained previously.\n")
@@ -357,7 +359,8 @@ def turn_layout(counter, player, computer):
     return result
 
 
-# simply formating and looping. Does it HAVE to be a function? Not really, but it makes it easier to update and locate in my opinion.
+# simply formating and looping. Does it HAVE to be a function? Not really,
+# but it makes it easier to update and locate in my opinion.
 
 def player_move_selector(player):
     inp = ""
@@ -396,11 +399,14 @@ def computer_move_selector():
     return x
 
 
-# Nothing complex here, just a simple way to create a value that will be used in a different function to initiate the combat sequence.
+# Nothing complex here, just a simple way to create a value that will be used in a different function to initiate the
+# combat sequence.
 
-# OKAY! So, the usage of both ifs and elifs on the statuses are to make sure that I'm passing in the correct number of parameters into the function.
-# The sequence will check what number is assigned to the player based on his or her decision with move selection, this is then ran until located. This is then repeated for the computer's random selection.
-# Once selected, it will run the code for each instance's function in the correct order and return it to update the stats of both players.
+# OKAY! So, the usage of both ifs and elifs on the statuses are to make sure that I'm passing in the correct number of
+# parameters into the function. The sequence will check what number is assigned to the player based on his or her
+# decision with move selection, this is then ran until located. This is then repeated for the computer's random
+# selection. Once selected, it will run the code for each instance's function in the correct order and return it to
+# update the stats of both players.
 def combat_sequence(player, computer, p_choice, c_choice):
     if p_choice == 1:
         if c_choice == 1:
@@ -467,7 +473,7 @@ def combat_sequence(player, computer, p_choice, c_choice):
 
 def main():
     print(_CHAPTER_LINE * 3)
-    print(f""""Come one and all to the colosseum! Come and witness the highest quality combat you will EVER see with your very own eyes!" 
+    print(f""""Come one and all to the colosseum! Come and witness the highest quality combat you will EVER see with your very own eyes!"
 The crowd erupts in applause and cheer. You can barely hear yourself think. Only one thing to do now, select your champion and guide them to victory!\n\n""")
     print("""Please select one of the following classes below:
 - Wizard (W)
