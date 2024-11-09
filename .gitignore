@@ -1,0 +1,13 @@
+# Mac OS metadata
+.DS_Store
+
+# editor temp files
+*~
+*.swp
+
+# editor data
+.idea/
+
+# python cache
+__pycache__/
+*.pyc
