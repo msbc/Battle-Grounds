@@ -37,208 +37,167 @@ ask_user = {
 
 # __init__ --> (comments on this in the next line)
 # This assigns a changeable value to the constants.
-# Whenever the functions that denote the actions each class takes, I won't have to worry about the baseline code itself changing alongside any instances of each class.
-# This prevents any possible issues with calling the class and makes transforming them throughout the fight much easier on my end.
+# Whenever the functions that denote the actions each class takes,
+# I won't have to worry about the baseline code itself changing alongside any instances of each class.
+# This prevents any possible issues with calling the class
+# and makes transforming them throughout the fight much easier on my end.
 
-class Cleric:
+class BaseCharacter:
+    _NAME = None
+    _BASE_HP = None
+    _BASE_DMG = None
+    _BASE_SHIELD = None
+    _BASE_SPELL = None
+    _BASE_THORNS = 0
+    _ATTACK_NAME = None
+    _BLOCK_NAME = None
+    _SPELL_NAME = None
+    _SPELL_TEXT = None
+    _aliases = None
+
+    hp: int
+    dmg: int
+    shield: int
+    spell: int
+    thorns: int
+    moves: dict
+
+    def __init__(self):
+        self.hp = self._BASE_HP
+        self.dmg = self._BASE_DMG
+        self.shield = self._BASE_SHIELD
+        self.spell = self._BASE_SPELL
+        self.thorns = self._BASE_THORNS
+        self.overflow_dmg = 0
+        self.moves = dict()
+        aliases = {"attack": ["attack", "atk", "dmg", "a"],
+                   "block": ["block", "blk", "b", "defend", "def", "defence"],
+                   "spell": ["spell", "status", "s"],
+                   }
+        for action, values in aliases.items():
+            self.moves.update({alias: action for alias in values})
+        if self._aliases:
+            for action, values in self._aliases.items():
+                self.moves.update({alias: action for alias in values})
+
+    def stat_line(self):
+        thorns = ""
+        if self.thorns:
+            thorns = f" + Deal {self.thorns} DMG to opponent if ATTACKED"
+        stats = f"""\
+{self._NAME}\n[HP]: {self.hp}/{self._BASE_HP}
+[ATTACK]: {self._ATTACK_NAME} (DMG = {self.dmg}) | \
+[BLOCK]: {self._BLOCK_NAME} (BLK = {self.shield}{thorns}) | \
+[SPELL]: {self._SPELL_NAME} ('{self._SPELL_TEXT} {self.spell}')\n"""
+        return stats
+
+    # Check if the opponent had blocked before calculating health loss
+    def attack(self, opponent, direct_dmg=True):
+        if direct_dmg:
+            opponent.hp -= self.dmg
+        else:
+            if self.overflow_dmg >= 1:
+                opponent.hp -= self.overflow_dmg
+        # It will also set the overflow dmg back to 0 afterward to prevent any issues with dealing an insane amount of
+        # damage all the time.
+        self.overflow_dmg = 0
+        self.dmg = self._BASE_DMG
+        return opponent.hp, self.overflow_dmg, self.dmg
+
+    # This will only happen if an attack goes into the shield. It'll calculate if the opponent deals any damage over
+    # the shield.
+    def block(self, opponent, attacked=True):
+        if attacked:
+            opponent.overflow_dmg = opponent.dmg - self.shield
+            opponent.hp -= self.thorns
+        self.shield = self._BASE_SHIELD
+        return opponent.overflow_dmg, self.shield
+
+    # This must be implemented in the subclasses
+    def status(self):
+        raise NotImplementedError
+
+
+class Cleric(BaseCharacter):
     _NAME = "Cleric"
     _BASE_HP = 8
     _BASE_DMG = 2
     _BASE_SHIELD = 2
     _BASE_SPELL = 1
+    _ATTACK_NAME = "Hammer"
+    _BLOCK_NAME = "Sacred Shield"
+    _SPELL_NAME = "Pray"
+    _SPELL_TEXT = "Increase your HEALTH by"
+    _aliases = {"attack": ["hammer", "hmr", "h", "hamer", "atk"],
+                "block": ["sacred shield", "sacred", "shield", "sacred sheild"],
+                "spell": ["pray", "p", "prey"],
+                }
 
-    hp: int
-    dmg: int
-    shield: int
-    spell: int
-
-    moves = {
-        "attack": ["hammer", "attack", "hmr", "h", "hamer", "atk", "dmg"],
-        "block": ["sacred shield", "block", "blk", "s", "ss", "sacred", "shield", "sacred sheild"],
-        "spell": ["pray", "spell", "p", "prey", "status"]
-    }
-
-    def __init__(self):
-        self.hp = self._BASE_HP
-        self.dmg = self._BASE_DMG
-        self.shield = self._BASE_SHIELD
-        self.spell = self._BASE_SPELL
-        self.overflow_dmg = 0
-
-    def stat_line(self):
-        stats = f"{self._NAME}\n[HP]: {self.hp}/{self._BASE_HP}\n[ATTACK]: Hammer (DMG = {self.dmg}) | [BLOCK]: Sacred Shield (BLK = {self.shield}) | [SPELL]: Pray ('Increase your HEALTH by {self.spell}')\n"
-        return stats
-
-    def attack(self, opponent,
-               direct_dmg=True):  # This is across the board for all classes. It will check if the opponent had blocked before calculating health loss.
-        if direct_dmg:
-            opponent.hp -= self.dmg
-        else:
-            if self.overflow_dmg >= 1:
-                opponent.hp -= self.overflow_dmg
-        self.overflow_dmg = 0  # It will also set the overflow dmg back to 0 afterward to prevent any issues with dealing an insane amount of damage all the time.
-        self.dmg = self._BASE_DMG
-        return opponent.hp, self.overflow_dmg, self.dmg
-
-    def block(self, opponent,
-              attacked=True):  # This will only happen if an attack goes into the shield. It'll calculate if the opponent deals any damage over the shield.
-        if attacked:
-            opponent.overflow_dmg = opponent.dmg - self.shield
-        self.shield = self._BASE_SHIELD
-        return opponent.overflow_dmg, self.shield
-
-    def status(self):  # will heal only if the player didn't die that turn
+    # will heal only if the player didn't die that turn
+    def status(self):
         if self.hp > _LOSE:
             self.hp += self.spell
         return self.hp
 
 
-class Wizard:
+class Wizard(BaseCharacter):
     _NAME = "Wizard"
     _BASE_HP = 7
     _BASE_DMG = 3
     _BASE_SHIELD = 2
     _BASE_SPELL = 1
+    _ATTACK_NAME = "Fireball"
+    _BLOCK_NAME = "Mana Ward"
+    _SPELL_NAME = "Weaken"
+    _SPELL_TEXT = "Reduce opponents ATTACK by"
+    _aliases = {"attack": ["fireball", "attack", "fire ball", "fb", "f", "fire", "ball"],
+                "block": ["mana ward", "mw", "mana", "ward", "manaward"],
+                "spell": ["weaken", "w", "weak", "wkn"],
+                }
 
-    hp: int
-    dmg: int
-    shield: int
-    spell: int
-
-    moves = {
-        "attack": ["fireball", "attack", "fire ball", "fb", "f", "fire", "ball", "atk", "dmg"],
-        "block": ["mana ward", "block", "mw", "mana", "ward", "manaward", "blk"],
-        "spell": ["weaken", "spell", "w", "status", "weak", "wkn"]
-    }
-
-    def __init__(self):
-        self.hp = self._BASE_HP
-        self.dmg = self._BASE_DMG
-        self.shield = self._BASE_SHIELD
-        self.spell = self._BASE_SPELL
-        self.overflow_dmg = 0
-
-    def stat_line(self):
-        stats = f"{self._NAME}\n[HP]: {self.hp}/{self._BASE_HP}\n[ATTACK]: Fireball (DMG = {self.dmg}) | [BLOCK]: Mana Ward (BLK = {self.shield}) | [SPELL]: Weaken ('Reduce opponents ATTACK by {self.spell}')\n"
-        return stats
-
-    def attack(self, opponent, direct_dmg=True):
-        if direct_dmg:
-            opponent.hp -= self.dmg
-        else:
-            if self.overflow_dmg >= 1:
-                opponent.hp -= self.overflow_dmg
-        self.dmg = self._BASE_DMG
-        self.overflow_dmg = 0
-        return opponent.hp, self.overflow_dmg, self.dmg
-
-    def block(self, opponent, attacked=True):
-        if attacked:
-            opponent.overflow_dmg = opponent.dmg - self.shield
-        self.shield = self._BASE_SHIELD
-        return opponent.overflow_dmg, self.shield
-
-    def status(self, opponent):  # reduces damage down to 0 flat
+    # reduces damage down to 0 flat
+    def status(self, opponent):
         if opponent.dmg > 0:
             opponent.dmg -= self.spell
-        return opponent.dmg
+        return max(opponent.dmg, 0)
 
 
-class Fighter:
+class Fighter(BaseCharacter):
     _NAME = "Fighter"
     _BASE_HP = 7
     _BASE_DMG = 2
     _BASE_SHIELD = 3
     _BASE_SPELL = 1
+    _ATTACK_NAME = "Long Sword"
+    _BLOCK_NAME = "Shield"
+    _SPELL_NAME = "Bolster"
+    _SPELL_TEXT = "Increase your ATTACK by"
+    _aliases = {"attack": ["long sword", "sord", "ls", "soard", "l", "sword", "longsword"],
+                "block": ["shield", "sheild"],
+                "spell": ["bolster", "bolstor"],
+                }
 
-    hp: int
-    dmg: int
-    shield: int
-    spell: int
-
-    moves = {
-        "attack": ["long sword", "sord", "ls", "soard", "l", "sword", "attack", "atk", "longsword", "dmg"],
-        "block": ["shield", "s", "block", "blk", "sheild"],
-        "spell": ["bolster", "b", "status", "spell", "bolstor"]
-    }
-
-    def __init__(self):
-        self.hp = self._BASE_HP
-        self.dmg = self._BASE_DMG
-        self.shield = self._BASE_SHIELD
-        self.spell = self._BASE_SPELL
-        self.overflow_dmg = 0
-
-    def stat_line(self):
-        stats = f"{self._NAME}\n[HP]: {self.hp}/{self._BASE_HP}\n[ATTACK]: Long Sword (DMG = {self.dmg}) | [BLOCK]: Shield (BLK = {self.shield}) | [SPELL]: Bolster ('Increase your ATTACK by {self.spell}')\n"
-        return stats
-
-    def attack(self, opponent, direct_dmg=True):
-        if direct_dmg:
-            opponent.hp -= self.dmg
-        else:
-            if self.overflow_dmg >= 1:
-                opponent.hp -= self.overflow_dmg
-        self.dmg = self._BASE_DMG
-        self.overflow_dmg = 0
-        return opponent.hp, self.overflow_dmg, self.dmg
-
-    def block(self, opponent, attacked=True):
-        if attacked:
-            opponent.overflow_dmg = opponent.dmg - self.shield
-        self.shield = self._BASE_SHIELD
-        return opponent.overflow_dmg, self.shield
-
-    def status(self):  # increases dmg per use until you use an attack
+    # increases dmg per use until you use an attack
+    def status(self):
         self.dmg += self.spell
         return self.dmg
 
 
-class Assassin:
+class Assassin(BaseCharacter):
     _NAME = "Assassin"
     _BASE_HP = 6
     _BASE_DMG = 2
     _BASE_SHIELD = 3
     _BASE_SPELL = 1
-
-    hp: int
-    dmg: int
-    shield: int
-    spell: int
-
-    moves = {
-        "attack": ["attack", "dagger", "d", "dag", "dager", "atk", "dmg"],
-        "block": ["block", "cloak", "c", "cloac", "clok", "blk"],
-        "spell": ["spell", "sabotage", "s", "sabatoge", "status"]
-    }
-
-    def __init__(self):
-        self.hp = self._BASE_HP
-        self.dmg = self._BASE_DMG
-        self.shield = self._BASE_SHIELD
-        self.spell = self._BASE_SPELL
-        self.overflow_dmg = 0
-
-    def stat_line(self):
-        stats = f"{self._NAME}\n[HP]: {self.hp}/{self._BASE_HP}\n[ATTACK]: Dagger (DMG = {self.dmg}) | [BLOCK]: Cloak (BLK = {self.shield} + Deal 1 DMG to opponent if ATTACKED) | [SPELL]: Sabotage ('Reduce opponents BLOCK by {self.spell}')\n"
-        return stats
-
-    def attack(self, opponent, direct_dmg=True):
-        if direct_dmg:
-            opponent.hp -= self.dmg
-        else:
-            if self.overflow_dmg >= 1:
-                opponent.hp -= self.overflow_dmg
-        self.dmg = self._BASE_DMG
-        self.overflow_dmg = 0
-        return opponent.hp, self.overflow_dmg, self.dmg
-
-    def block(self, opponent, attacked=True):
-        if attacked:
-            opponent.overflow_dmg = opponent.dmg - self.shield
-            opponent.hp -= 1
-        self.shield = self._BASE_SHIELD
-        return opponent.overflow_dmg, opponent.hp, self.shield
+    _BASE_THORNS = 1
+    _ATTACK_NAME = "Dagger"
+    _BLOCK_NAME = "Cloak"
+    _SPELL_NAME = "Sabotage"
+    _SPELL_TEXT = "Reduce opponents SHIELD by"
+    _aliases = {"attack": ["dagger", "d", "dag", "dager"],
+                "block": ["cloak", "c", "cloac", "clok"],
+                "spell": ["sabotage", "sabatoge"],
+                }
 
     def status(self, opponent):
         if opponent.shield > 0:
@@ -363,21 +322,14 @@ def turn_layout(counter, player, computer):
 # but it makes it easier to update and locate in my opinion.
 
 def player_move_selector(player):
-    inp = ""
-    x = 0
+    inp = None
     print("What move will you pick? (Look over your stat sheet and type out the move name you'd like)")
-    while inp not in player.moves["attack"] and inp not in player.moves["block"] and inp not in player.moves["spell"]:
+    while not inp:
         inp = input("Input move here --> ").lower()
-        if inp not in player.moves["attack"] and inp not in player.moves["block"] and inp not in player.moves["spell"]:
+        inp = player.moves.get(inp)
+        if not inp:
             print("That is not a valid move name, please try again.\n")
-    if inp in player.moves["attack"]:
-        x = 1
-    elif inp in player.moves["block"]:
-        x = 2
-    elif inp in player.moves["spell"]:
-        x = 3
-    else:
-        raise ValueError("Error within the player_move_selector() function")
+    x = ["attack", "block", "spell"].index(inp) + 1
     return x
 
 
@@ -473,7 +425,7 @@ def combat_sequence(player, computer, p_choice, c_choice):
 
 def main():
     print(_CHAPTER_LINE * 3)
-    print(f""""Come one and all to the colosseum! Come and witness the highest quality combat you will EVER see with your very own eyes!"
+    print(""""Come one and all to the colosseum! Come and witness the highest quality combat you will EVER see with your very own eyes!"
 The crowd erupts in applause and cheer. You can barely hear yourself think. Only one thing to do now, select your champion and guide them to victory!\n\n""")
     print("""Please select one of the following classes below:
 - Wizard (W)
